@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
@@ -26,7 +25,7 @@ public class Triangles extends JPanel implements ActionListener {
 	private JButton speedBtn;
 	private JButton imageBtn;
 	private JTextField sizeTxt;
-	private JTextField densityTxt;
+	private JTextField sidesTxt;
 	private JTextField alikeTxt;
 	private JTextField genSkipTxt;
 	private JTextField triangleSizeTxt;
@@ -62,6 +61,8 @@ public class Triangles extends JPanel implements ActionListener {
 	private ArrayList<Point> points = new ArrayList<>();
 	private int round = 0;
 	private Point recentPoint = new Point(0,0);
+	private ArrayList<Point> polygon = new ArrayList<>();
+	private int sides;
 	
     public Triangles(int xDim, int yDim, int numColors) {
         super(new GridBagLayout());                       				// set up graphics window
@@ -99,7 +100,7 @@ public class Triangles extends JPanel implements ActionListener {
 		genSkip = 1;
 		vMax = yDim;
 		hMax = xDim;
-		density = Double.parseDouble(densityTxt.getText()) / 100;
+		sides = Integer.parseInt(sidesTxt.getText());
 		alike = Double.parseDouble(alikeTxt.getText()) / 100;
 		triangleSize = Integer.parseInt(triangleSizeTxt.getText());
 		neighborRadius = Integer.parseInt(neighborTxt.getText());
@@ -154,26 +155,26 @@ public class Triangles extends JPanel implements ActionListener {
 		add(imageBtn, c);
 		c.gridy = 2;
 		c.fill = GridBagConstraints.BOTH;
-		add(new JLabel("Skip Generations"), c);
+		add(new JLabel("useless 1"), c);
 		c.gridy = 3;
-		add(new JLabel("% Density"), c);
+		add(new JLabel("Sides"), c);
 		c.gridy = 4;
-		add(new JLabel("% alike wanted"), c);
+		add(new JLabel("useless 2"), c);
 		c.gridy = 5;
-		add(new JLabel("Triangle size"), c);
+		add(new JLabel("probably doesnt do anything"), c);
 		c.gridy = 6;
-		add(new JLabel("Neighbor radius"), c);
+		add(new JLabel("useless 3"), c);
 		c.gridy = 7;
-		add(new JLabel("Cell size"), c);
+		add(new JLabel("Cell size (dont change)"), c);
 		c.gridy = 8;
-		add(new JLabel("# colors"), c);
+		add(new JLabel("useless 4"), c);
 		c.gridy = 9;
-		add(new JLabel("# unhappy: "), c);
+		add(new JLabel("useless 5"), c);
 		c.gridx = 7;
 		c.gridy = 2;
 		add(genSkipTxt, c);    	
 		c.gridy = 3;
-		add(densityTxt, c);
+		add(sidesTxt, c);
 		c.gridy = 4;
 		add(alikeTxt, c);
 		c.gridy = 5;
@@ -189,10 +190,10 @@ public class Triangles extends JPanel implements ActionListener {
     }
     
     public void initTxt() {
-    	densityTxt = new JTextField("90", 4); //the percentage of the cells grid to fill with living cells
-    	densityTxt.addActionListener(new ActionListener() {
+    	sidesTxt = new JTextField("3", 4); //the percentage of the cells grid to fill with living cells
+    	sidesTxt.addActionListener(new ActionListener() {
     		public void actionPerformed(ActionEvent e) {
-    			density = Double.parseDouble(densityTxt.getText()) / 100;
+    			sides = Integer.parseInt(sidesTxt.getText());
 				resetSim();
 				drawCells(pic.getGraphics());
     		}
@@ -221,7 +222,7 @@ public class Triangles extends JPanel implements ActionListener {
     			neighborRadius = Integer.parseInt(neighborTxt.getText());
     		}
     	});
-    	sizeTxt = new JTextField("5", 4); //how large each cell in the grid is in pixels
+    	sizeTxt = new JTextField("1", 4); //how large each cell in the grid is in pixels
     	sizeTxt.addActionListener(new ActionListener() {
     		public void actionPerformed(ActionEvent e) {
     			size = Integer.parseInt(sizeTxt.getText());
@@ -275,7 +276,7 @@ public class Triangles extends JPanel implements ActionListener {
 			}
 		});    	
 		
-		imageBtn = new JButton("Save Picture");
+		imageBtn = new JButton("Doesnt work");
 		imageBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -336,45 +337,87 @@ public class Triangles extends JPanel implements ActionListener {
     		for (int j = 0; j < cells[i].length; j++) {
 		    	g.setColor(colors[cells[i][j]]);
 				g.fillRect(i*size, j*size, size, size);
-    			
     		}
     	}
     }
 
     public void resetSim() {
+    	if (sides > 7){
+    		throw new IndexOutOfBoundsException("too many sides");
+		}
 		cells = new int[hMax / size][vMax / size];
-		//left (0)
-    	cells[0][0] = 1;
-    	//right (1)
-    	cells[((hMax/size) / triangleSize) - 1][0] = 2;
-    	// middle (2)
-    	cells[(((hMax/size) / triangleSize) - 1)/2][(int) ((((hMax/size) / triangleSize) - 1)* (Math.sqrt(3.0)/2))] = 3;
+		Point pivot = new Point(300,300);
+
+		int increment = 360/sides;
+
+		polygon.clear();
+
+		for (int i = 0; i < sides; i++) {
+			Point p = new Point( (int) (pivot.x + (270 * (Math.cos(Math.toRadians(increment*i))))), (int) (pivot.y + (270 * (Math.sin(Math.toRadians(increment*i))))));
+			polygon.add(p);
+		}
+
+		for (int i = 0; i < polygon.size(); i++) {
+			cells[polygon.get(i).x][polygon.get(i).y] = (i+1);
+		}
+
+		recentPoint.setLocation(polygon.get(0).x,polygon.get(0).y);
+
+//		//left (0)
+//    	cells[0][0] = 1;
+//    	//right (1)
+//    	cells[((hMax/size) / triangleSize) - 1][0] = 2;
+//    	// middle (2)
+//    	cells[(((hMax/size) / triangleSize) - 1)/2][(int) ((((hMax/size) / triangleSize) - 1)* (Math.sqrt(3.0)/2))] = 3;
     }
     
     public void updateCells() {
-		int rand = ((int) (Math.random() * (3)));
-    	Point p = new Point();
-    	if (round == 0){
-    		p = new Point(0,0);
-    		round++;
+		int rand = ((int) (Math.random() * (sides)));
+		Point p = new Point();
+		if (round == 0){
+			p = new Point(300,300);
+			round++;
 		}
 
-
-    	if (rand == 0){
-    		p.setLocation(((recentPoint.x)/2),(recentPoint.y)/2);
-		}else if (rand == 1){
-    		p.setLocation(((((hMax/size) / triangleSize) - 1) + recentPoint.x)/2,((recentPoint.y)/2));
-		}else if(rand == 2){
-    		p.setLocation((((((hMax/size) / triangleSize) - 1)/2) + recentPoint.x)/2,(((((hMax/size) / triangleSize) - 1)* (Math.sqrt(3.0)/2)) + recentPoint.y)/2);
-
-		}
+		p.setLocation((recentPoint.x + polygon.get(rand).x)/2,(recentPoint.y + polygon.get(rand).y)/2);
 
 		recentPoint.setLocation(p.getLocation());
 
 
 
-    	points.add(p);
-    	cells[p.x][p.y] = rand + 1;
+		points.add(p);
+		cells[p.x][p.y] = rand + 1;
+
+
+
+
+
+
+
+
+//		int rand = ((int) (Math.random() * (3)));
+//    	Point p = new Point();
+//    	if (round == 0){
+//    		p = new Point(0,0);
+//    		round++;
+//		}
+//
+//
+//    	if (rand == 0){
+//    		p.setLocation(((recentPoint.x)/2),(recentPoint.y)/2);
+//		}else if (rand == 1){
+//    		p.setLocation(((((hMax/size) / triangleSize) - 1) + recentPoint.x)/2,((recentPoint.y)/2));
+//		}else if(rand == 2){
+//    		p.setLocation((((((hMax/size) / triangleSize) - 1)/2) + recentPoint.x)/2,(((((hMax/size) / triangleSize) - 1)* (Math.sqrt(3.0)/2)) + recentPoint.y)/2);
+//
+//		}
+//
+//		recentPoint.setLocation(p.getLocation());
+//
+//
+//
+//    	points.add(p);
+//    	cells[p.x][p.y] = rand + 1;
 
 
     }

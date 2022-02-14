@@ -16,7 +16,7 @@ public class TrianglesWrapper extends JFrame {
         add(new Triangles(FRAMESIZE, FRAMESIZE, NUMCOLORS));
 //        add(new Triangles(FRAMESIZE, FRAMESIZE, NUMCOLORS));
         setResizable(false);
-        setTitle("Sociology");
+        setTitle("Fractals?");
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
